@@ -16,6 +16,7 @@ struct Token{
     TokenKind kind;
     Token *next;
     char *str;
+    int len;
     int val;
 };
 
@@ -35,9 +36,9 @@ struct Node{
     int val;
 };
 
-Token *new_token(Token *token, TokenKind kind, char *str);
+Token *new_token(Token *token, TokenKind kind, char *str, int len);
 Token *tokenize(char *p, char *user_input);
-bool consume_sym(Token **token, char op);
+bool consume_sym(Token **token, char *op);
 int consume_num(Token **token, char *user_input);
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
@@ -75,11 +76,12 @@ int main(int argc, char **argv){
     return 0;
 }
 
-Token *new_token(Token *token, TokenKind kind, char *str){
+Token *new_token(Token *token, TokenKind kind, char *str, int len){
     Token *new = calloc(1, sizeof(Token));
 
     new->kind = kind;
     new->str = str;
+    new->len = len;
     token->next = new;
 
     return new;
@@ -95,24 +97,24 @@ Token *tokenize(char *p, char *user_input){
             continue;
         }
         if(isdigit(*p)){
-            tail = new_token(tail, TK_NUM, p);
+            tail = new_token(tail, TK_NUM, p, 0);
             tail->val = strtol(p, &p, 10);
             continue;
         }
         else if(strchr("+-*/()", *p)){
-            tail = new_token(tail, TK_SYMBOL, p);
+            tail = new_token(tail, TK_SYMBOL, p, 1);
             ++p;
             continue;
         }
         else error_at(user_input, tail->str, "Invalid synbol.");
     }
 
-    new_token(tail, TK_END, NULL);
+    new_token(tail, TK_END, NULL, 0);
     return head.next;
 }
 
-bool consume_sym(Token **token, char op){
-    if((*token)->kind==TK_SYMBOL && (*token)->str[0]==op){
+bool consume_sym(Token **token, char *op){
+    if((*token)->kind==TK_SYMBOL && !memcmp((*token)->str, op, (*token)->len)){
         *token = (*token)->next;
         return true;
     }
@@ -149,11 +151,11 @@ Node *expr(Token **token, char *user_input){
     Node *node = mul(token, user_input);
 
     while(1){
-        if(consume_sym(token, '+')){
+        if(consume_sym(token, "+")){
             node = new_node(ND_ADD, node, mul(token, user_input));
             continue;
         }
-        if(consume_sym(token, '-')){
+        if(consume_sym(token, "-")){
             node = new_node(ND_SUB, node, mul(token, user_input));
             continue;
         }
@@ -165,11 +167,11 @@ Node *mul(Token **token, char *user_input){
     Node *node = unary(token, user_input);
 
     while(1){
-        if(consume_sym(token, '*')){
+        if(consume_sym(token, "*")){
             node = new_node(ND_MUL, node, unary(token, user_input));
             continue;
         }
-        if(consume_sym(token, '/')){
+        if(consume_sym(token, "/")){
             node = new_node(ND_DIV, node, unary(token, user_input));
             continue;
         }
@@ -178,20 +180,20 @@ Node *mul(Token **token, char *user_input){
 }
 
 Node *unary(Token **token, char *user_input){
-    if(consume_sym(token, '+')){
+    if(consume_sym(token, "+")){
         return primary(token, user_input);
     }
-    if(consume_sym(token, '-')){
+    if(consume_sym(token, "-")){
         return new_node(ND_SUB, new_node_num(0), primary(token, user_input));
     }
     return primary(token, user_input);
 }
 
 Node *primary(Token **token, char *user_input){
-    if(consume_sym(token, '(')){
+    if(consume_sym(token, "(")){
         Node *node = expr(token, user_input);
 
-        if(consume_sym(token, ')')){
+        if(consume_sym(token, ")")){
             return node;
         }
         else{
