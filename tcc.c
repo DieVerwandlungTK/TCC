@@ -22,6 +22,8 @@ struct Token{
 typedef enum{
     ND_ADD,
     ND_SUB,
+    ND_MUL,
+    ND_DIV,
     ND_NUM
 } NodeKind;
 
@@ -40,7 +42,9 @@ int consume_num(Token **token, char *user_input);
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
-Node *expr(Token *token, char *user_input);
+Node *expr(Token **token, char *user_input);
+Node *mul(Token **token, char *user_input);
+Node *primary(Token **token, char *user_input);
 
 void gen(Node *node);
 
@@ -56,7 +60,7 @@ int main(int argc, char **argv){
     char *user_input = argv[1];
 
     Token *token = tokenize(user_input, user_input);
-    Node *node = expr(token, user_input);
+    Node *node = expr(&token, user_input);
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
@@ -94,7 +98,7 @@ Token *tokenize(char *p, char *user_input){
             tail->val = strtol(p, &p, 10);
             continue;
         }
-        else if(strchr("+-", *p)){
+        else if(strchr("+-*/()", *p)){
             tail = new_token(tail, TK_SYMBOL, p);
             ++p;
             continue;
@@ -140,16 +144,51 @@ Node *new_node_num(int val){
     return new;
 }
 
-Node *expr(Token *token, char *user_input){
-    Node *node = new_node_num(consume_num(&token, user_input));
+Node *expr(Token **token, char *user_input){
+    Node *node = mul(token, user_input);
 
     while(1){
-        if(consume_sym(&token, '+')){
-            node = new_node(ND_ADD, node, new_node_num(consume_num(&token, user_input)));
+        if(consume_sym(token, '+')){
+            node = new_node(ND_ADD, node, mul(token, user_input));
+            continue;
         }
-        if(consume_sym(&token, '-')){
-            node = new_node(ND_SUB, node, new_node_num(consume_num(&token, user_input)));
+        if(consume_sym(token, '-')){
+            node = new_node(ND_SUB, node, mul(token, user_input));
+            continue;
         }
+        return node;
+    }
+}
+
+Node *mul(Token **token, char *user_input){
+    Node *node = primary(token, user_input);
+
+    while(1){
+        if(consume_sym(token, '*')){
+            node = new_node(ND_MUL, node, primary(token, user_input));
+            continue;
+        }
+        if(consume_sym(token, '/')){
+            node = new_node(ND_DIV, node, primary(token, user_input));
+            continue;
+        }
+        return node;
+    }
+}
+
+Node *primary(Token **token, char *user_input){
+    if(consume_sym(token, '(')){
+        Node *node = expr(token, user_input);
+
+        if(consume_sym(token, ')')){
+            return node;
+        }
+        else{
+            error_at(user_input, (*token)->str, "The location of ')' is unknown.");
+        }
+    }
+    else{
+        Node *node = new_node_num(consume_num(token, user_input));
         return node;
     }
 }
@@ -172,6 +211,15 @@ void gen(Node *node){
 
         case ND_SUB:
             printf("    sub rax, rdi\n");
+            break;
+
+        case ND_MUL:
+            printf("  imul rax, rdi\n");
+            break;
+
+        case ND_DIV:
+            printf("  cqo\n");
+            printf("  idiv rdi\n");
             break;
     }
     printf("    push rax\n");
