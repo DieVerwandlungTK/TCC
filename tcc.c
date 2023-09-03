@@ -44,6 +44,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 Node *expr(Token **token, char *user_input);
 Node *mul(Token **token, char *user_input);
+Node *unary(Token **token, char *user_input);
 Node *primary(Token **token, char *user_input);
 
 void gen(Node *node);
@@ -161,19 +162,29 @@ Node *expr(Token **token, char *user_input){
 }
 
 Node *mul(Token **token, char *user_input){
-    Node *node = primary(token, user_input);
+    Node *node = unary(token, user_input);
 
     while(1){
         if(consume_sym(token, '*')){
-            node = new_node(ND_MUL, node, primary(token, user_input));
+            node = new_node(ND_MUL, node, unary(token, user_input));
             continue;
         }
         if(consume_sym(token, '/')){
-            node = new_node(ND_DIV, node, primary(token, user_input));
+            node = new_node(ND_DIV, node, unary(token, user_input));
             continue;
         }
         return node;
     }
+}
+
+Node *unary(Token **token, char *user_input){
+    if(consume_sym(token, '+')){
+        return primary(token, user_input);
+    }
+    if(consume_sym(token, '-')){
+        return new_node(ND_SUB, new_node_num(0), primary(token, user_input));
+    }
+    return primary(token, user_input);
 }
 
 Node *primary(Token **token, char *user_input){
