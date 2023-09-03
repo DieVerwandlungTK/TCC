@@ -19,12 +19,34 @@ struct Token{
     int val;
 };
 
+typedef enum{
+    ND_ADD,
+    ND_SUB,
+    ND_NUM
+} NodeKind;
+
+typedef struct Node Node;
+struct Node{
+    NodeKind kind;
+    Node *lhs;
+    Node *rhs;
+    int val;
+};
+
 Token *new_token(Token *token, TokenKind kind, char *str);
 Token *tokenize(char *p, char *user_input);
 bool consume_sym(Token **token, char op);
 int consume_num(Token **token, char *user_input);
+
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node_num(int val);
+Node *expr(Token *token, char *user_input);
+
+void gen(Node *node);
+
 void error(char *fmt, ...);
 void error_at(char *user_input, char *loc, char *fmt, ...);
+
 
 int main(int argc, char **argv){
     if(argc!=2){
@@ -34,25 +56,15 @@ int main(int argc, char **argv){
     char *user_input = argv[1];
 
     Token *token = tokenize(user_input, user_input);
+    Node *node = expr(token, user_input);
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
 
-    printf("    mov rax, %d\n", consume_num(&token, user_input));
+    gen(node);
 
-    while((token->kind)!=TK_END){
-        if(consume_sym(&token, '+')){
-            printf("    add rax, %d\n", consume_num(&token, user_input));
-            continue;
-        }
-        if(consume_sym(&token, '-')){
-            printf("    sub rax, %d\n", consume_num(&token, user_input));
-            continue;
-        }
-        error_at(user_input, token->str, "Invalid syntax.");
-    }
-
+    printf("    pop rax\n");
     printf("    ret\n");
 
     return 0;
@@ -109,6 +121,60 @@ int consume_num(Token **token, char* user_input){
         return val;
     }
     error_at(user_input, (*token)->str, "Here must be a number.");
+}
+
+Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
+    Node *new = calloc(1, sizeof(Node));
+    new->kind = kind;
+    new->lhs = lhs;
+    new->rhs = rhs;
+
+    return new;
+}
+
+Node *new_node_num(int val){
+    Node *new = calloc(1, sizeof(Node));
+    new->kind = ND_NUM;
+    new->val = val;
+
+    return new;
+}
+
+Node *expr(Token *token, char *user_input){
+    Node *node = new_node_num(consume_num(&token, user_input));
+
+    while(1){
+        if(consume_sym(&token, '+')){
+            node = new_node(ND_ADD, node, new_node_num(consume_num(&token, user_input)));
+        }
+        if(consume_sym(&token, '-')){
+            node = new_node(ND_SUB, node, new_node_num(consume_num(&token, user_input)));
+        }
+        return node;
+    }
+}
+
+void gen(Node *node){
+    if(node->kind==ND_NUM){
+        printf("    push %d\n", node->val);
+        return;
+    }
+
+    gen(node->lhs);
+    gen(node->rhs);
+
+    printf("    pop rdi\n");
+    printf("    pop rax\n");
+    switch (node->kind){
+        case ND_ADD:
+            printf("    add rax, rdi\n");
+            break;
+
+        case ND_SUB:
+            printf("    sub rax, rdi\n");
+            break;
+    }
+    printf("    push rax\n");
 }
 
 void error(char *fmt, ...){
