@@ -20,10 +20,11 @@ struct Token{
 };
 
 Token *new_token(Token *token, TokenKind kind, char *str);
-Token *tokenize(char *p);
+Token *tokenize(char *p, char *user_input);
 bool consume_sym(Token **token, char op);
-int consume_num(Token **token);
+int consume_num(Token **token, char *user_input);
 void error(char *fmt, ...);
+void error_at(char *user_input, char *loc, char *fmt, ...);
 
 int main(int argc, char **argv){
     if(argc!=2){
@@ -32,24 +33,24 @@ int main(int argc, char **argv){
 
     char *user_input = argv[1];
 
-    Token *token = tokenize(user_input);
+    Token *token = tokenize(user_input, user_input);
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
 
-    printf("    mov rax, %d\n", consume_num(&token));
+    printf("    mov rax, %d\n", consume_num(&token, user_input));
 
     while((token->kind)!=TK_END){
         if(consume_sym(&token, '+')){
-            printf("    add rax, %d\n", consume_num(&token));
+            printf("    add rax, %d\n", consume_num(&token, user_input));
             continue;
         }
         if(consume_sym(&token, '-')){
-            printf("    sub rax, %d\n", consume_num(&token));
+            printf("    sub rax, %d\n", consume_num(&token, user_input));
             continue;
         }
-        error("Invalid operator.");
+        error_at(user_input, token->str, "Invalid syntax.");
     }
 
     printf("    ret\n");
@@ -67,7 +68,7 @@ Token *new_token(Token *token, TokenKind kind, char *str){
     return new;
 }
 
-Token *tokenize(char *p){
+Token *tokenize(char *p, char *user_input){
     Token head;
     Token *tail = &head;
 
@@ -86,7 +87,7 @@ Token *tokenize(char *p){
             ++p;
             continue;
         }
-        else error("Invalid syntax.");
+        else error_at(user_input, tail->str, "Invalid synbol.");
     }
 
     new_token(tail, TK_END, NULL);
@@ -101,19 +102,32 @@ bool consume_sym(Token **token, char op){
     return false;
 }
 
-int consume_num(Token **token){
+int consume_num(Token **token, char* user_input){
     if((*token)->kind==TK_NUM){
         int val = (*token)->val;
         *token = (*token)->next;
         return val;
     }
-    error("Here must be a number.");
+    error_at(user_input, (*token)->str, "Here must be a number.");
 }
 
 void error(char *fmt, ...){
     va_list ap;
     va_start(ap, fmt);
     fprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
+void error_at(char *user_input, char *loc, char *fmt, ...){
+    va_list ap;
+    va_start(ap, fmt);
+
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, " ");
+    fprintf(stderr, "^ ");
+    vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
     exit(1);
 }
