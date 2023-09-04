@@ -21,11 +21,15 @@ struct Token{
 };
 
 typedef enum{
-    ND_ADD,
-    ND_SUB,
-    ND_MUL,
-    ND_DIV,
-    ND_NUM
+    ND_ADD, // "+"
+    ND_SUB, // "-"
+    ND_MUL, // "*"
+    ND_DIV, // "/"
+    ND_NUM, // Integer
+    ND_EQ,  // "=="
+    ND_NEQ, // "!="
+    ND_LT,  // "<"
+    ND_LTE  // "<="
 } NodeKind;
 
 typedef struct Node Node;
@@ -36,7 +40,6 @@ struct Node{
     int val;
 };
 
-bool cmp_tok(char *s1, char *s2, int len);
 Token *new_token(Token *token, TokenKind kind, char *str, int len);
 Token *tokenize(char *p, char *user_input);
 bool consume_sym(Token **token, char *op);
@@ -45,6 +48,9 @@ int consume_num(Token **token, char *user_input);
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 Node *expr(Token **token, char *user_input);
+Node *equality(Token **token, char *user_input);
+Node *relational(Token **token, char *user_input);
+Node *add(Token **token, char *user_input);
 Node *mul(Token **token, char *user_input);
 Node *unary(Token **token, char *user_input);
 Node *primary(Token **token, char *user_input);
@@ -103,7 +109,7 @@ Token *tokenize(char *p, char *user_input){
             continue;
         }
         if(!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2) || !memcmp(p, "!=", 2)){
-            tail = new_token(tail, TK_NUM, p, 2);
+            tail = new_token(tail, TK_SYMBOL, p, 2);
             p += 2;
             continue;
         }
@@ -154,6 +160,50 @@ Node *new_node_num(int val){
 }
 
 Node *expr(Token **token, char *user_input){
+    return equality(token, user_input);
+}
+
+Node *equality(Token **token, char *user_input){
+    Node *node = relational(token, user_input);
+
+   while(1){
+        if(consume_sym(token, "==")){
+            node = new_node(ND_EQ, node, mul(token, user_input));
+            continue;
+        }
+        if(consume_sym(token, "!=")){
+            node = new_node(ND_NEQ, node, mul(token, user_input));
+            continue;
+        }
+        return node;
+    }
+}
+
+Node *relational(Token **token, char *user_input){
+    Node *node = add(token, user_input);
+
+    while(1){
+        if(consume_sym(token, "<")){
+            node = new_node(ND_LT, node, add(token, user_input));
+            continue;
+        }
+        if(consume_sym(token, "<=")){
+            node = new_node(ND_LTE, node, add(token, user_input));
+            continue;
+        }
+        if(consume_sym(token, ">")){
+            node = new_node(ND_LT, add(token, user_input), node);
+            continue;
+        }
+        if(consume_sym(token, ">=")){
+            node = new_node(ND_LTE, add(token, user_input), node);
+            continue;
+        }
+        return node;
+    }
+}
+
+Node *add(Token **token, char *user_input){
     Node *node = mul(token, user_input);
 
     while(1){
@@ -239,6 +289,30 @@ void gen(Node *node){
         case ND_DIV:
             printf("  cqo\n");
             printf("  idiv rdi\n");
+            break;
+        
+        case ND_EQ:
+            printf("    cmp rax, rdi\n");
+            printf("    sete al\n");
+            printf("    movzb rax, al\n");
+            break;
+        
+        case ND_NEQ:
+            printf("    cmp rax, rdi\n");
+            printf("    setne al\n");
+            printf("    movzb rax, al\n");
+            break;
+        
+        case ND_LT:
+            printf("    cmp rax, rdi\n");
+            printf("    setl al\n");
+            printf("    movzb rax, al\n");
+            break;
+        
+        case ND_LTE:
+            printf("    cmp rax, rdi\n");
+            printf("    setle al\n");
+            printf("    movzb rax, al\n");
             break;
     }
     printf("    push rax\n");
