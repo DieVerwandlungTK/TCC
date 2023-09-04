@@ -36,6 +36,7 @@ struct Node{
     int val;
 };
 
+bool cmp_tok(char *s1, char *s2, int len);
 Token *new_token(Token *token, TokenKind kind, char *str, int len);
 Token *tokenize(char *p, char *user_input);
 bool consume_sym(Token **token, char *op);
@@ -101,12 +102,17 @@ Token *tokenize(char *p, char *user_input){
             tail->val = strtol(p, &p, 10);
             continue;
         }
-        else if(strchr("+-*/()", *p)){
+        if(!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2) || !memcmp(p, "!=", 2)){
+            tail = new_token(tail, TK_NUM, p, 2);
+            p += 2;
+            continue;
+        }
+        if(strchr("+-*/()<>", *p)){
             tail = new_token(tail, TK_SYMBOL, p, 1);
             ++p;
             continue;
         }
-        else error_at(user_input, tail->str, "Invalid synbol.");
+        error_at(user_input, tail->str, "Invalid synbol.");
     }
 
     new_token(tail, TK_END, NULL, 0);
