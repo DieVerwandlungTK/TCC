@@ -5,12 +5,13 @@ int main(int argc, char **argv) {
         error("The number of arguments is %d, but must be 2.\n", argc);
     }
 
-    char *user_input = argv[1];
-    Lvar *locals = calloc(1, sizeof(Lvar));
-    locals->offset = 0;
+    user_input = argv[1];
 
-    Token *token = tokenize(user_input, user_input);
-    Node **code = program(&token, user_input, &locals);
+    token = tokenize(user_input);
+    code = calloc(MAX_STMTS+1, sizeof(Node*));
+    locals = calloc(1, sizeof(Lvar*));
+
+    program();
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");

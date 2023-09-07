@@ -11,7 +11,7 @@ Token *new_token(Token *token, TokenKind kind, char *str, int len) {
     return new;
 }
 
-Token *tokenize(char *p, char *user_input) {
+Token *tokenize(char *p) {
     Token head;
     Token *tail = &head;
     tail->len = 0;
@@ -47,50 +47,50 @@ Token *tokenize(char *p, char *user_input) {
             tail = new_token(tail, TK_IDT, tmp, p-tmp);
             continue;
         }
-        error_at(user_input, tail->str, "Invalid symbol.");
+        error_at(tail->str, "Invalid symbol.");
     }
 
     new_token(tail, TK_END, --p, 0);
     return head.next;
 }
 
-bool consume_sym(Token **token, char *op) {
-    if ((*token)->kind==TK_SYMBOL && (*token)->len==strlen(op) && !memcmp((*token)->str, op, strlen(op))){
-        *token = (*token)->next;
+bool consume_sym(char *op) {
+    if (token->kind==TK_SYMBOL && token->len==strlen(op) && !memcmp(token->str, op, strlen(op))){
+        token = token->next;
         return true;
     }
     return false;
 }
 
-Token *consume_idt(Token **token) {
-    if ((*token)->kind==TK_IDT){
-        Token *idt = *token;
-        *token = (*token)->next;
+Token *consume_idt() {
+    if (token->kind==TK_IDT){
+        Token *idt = token;
+        token = token->next;
         return idt;
     }
     else return NULL;
 }
 
-int consume_num(Token **token, char *user_input) {
-    if ((*token)->kind == TK_NUM) {
-        int val = (*token)->val;
-        *token = (*token)->next;
+int consume_num() {
+    if (token->kind == TK_NUM) {
+        int val = token->val;
+        token = token->next;
         return val;
     }
-    error_at(user_input, (*token)->str, "Here must be a number.");
+    error_at(token->str, "Here must be a number.");
 }
 
-bool consume_ret(Token **token){
-    if((*token)->kind == TK_RET){
-        *token = (*token)->next;
+bool consume_ret(){
+    if(token->kind == TK_RET){
+        token = token->next;
         return true;
     }
     else return false;
 }
 
-Lvar *find_Lvar(Token *token, Lvar *locals){
+Lvar *find_Lvar(Token *tok){
     for(Lvar *var=locals;var;var = var->next){
-        if(token->len==var->len && !memcmp(token->str, var->str, var->len)){
+        if(tok->len==var->len && !memcmp(tok->str, var->str, var->len)){
             return var;
         }
     }

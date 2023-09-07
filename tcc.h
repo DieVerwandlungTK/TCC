@@ -56,34 +56,39 @@ struct Lvar{
     int offset;
 };
 
-Token *new_token(Token *token, TokenKind kind, char *str, int len);
-Token *tokenize(char *p, char *user_input);
+Token *new_token(Token *tok, TokenKind kind, char *str, int len);
+Token *tokenize(char *p);
 
-bool consume_sym(Token **token, char *op);
-Token *consume_idt(Token **token);
-int consume_num(Token **token, char *user_input);
-bool consume_ret(Token **token);
+bool consume_sym(char *op);
+Token *consume_idt();
+int consume_num();
+bool consume_ret();
 
-Lvar *find_Lvar(Token *token, Lvar *locals);
+Lvar *find_Lvar(Token *tok);
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
-Node **program(Token **token, char *user_input, Lvar **locals);
-Node *stmt(Token **token, char *user_input, Lvar **locals);
-Node *expr(Token **token, char *user_input, Lvar **locals);
-Node *assign(Token **token, char *user_input, Lvar **locals);
-Node *equality(Token **token, char *user_input, Lvar **locals);
-Node *relational(Token **token, char *user_input, Lvar **locals);
-Node *add(Token **token, char *user_input, Lvar **locals);
-Node *mul(Token **token, char *user_input, Lvar **locals);
-Node *unary(Token **token, char *user_input, Lvar **locals);
-Node *primary(Token **token, char *user_input, Lvar **locals);
+void program();
+Node *stmt();
+Node *expr();
+Node *assign();
+Node *equality();
+Node *relational();
+Node *add();
+Node *mul();
+Node *unary();
+Node *primary();
 
 void gen_lval(Node *node);
 void gen(Node *node);
 
 void error(char *fmt, ...);
-void error_at(char *user_input, char *loc, char *fmt, ...);
+void error_at(char *loc, char *fmt, ...);
 
 bool is_valid_char(char c);
+
+extern Token *token;
+extern char *user_input;
+extern Lvar *locals;
+extern Node **code;

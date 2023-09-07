@@ -17,154 +17,150 @@ Node *new_node_num(int val) {
     return new;
 }
 
-Node **program(Token **token, char *user_input, Lvar **locals) { 
-    Node **stmts = calloc(MAX_STMTS, sizeof(Node*));
-
-    int i = 0;
-    while((*token)->kind!=TK_END){
-        stmts[i] = stmt(token, user_input, locals);
+void program() { 
+    int i=0;
+    while(token->kind!=TK_END){
+        if(i>=MAX_STMTS) error("Too many statements.\n");
+        code[i] = stmt();
         ++i;
     }
-
-    stmts[i] = NULL;
-    return stmts;
+    code[i+1] = NULL;
 }
 
-Node *stmt(Token **token, char *user_input, Lvar **locals){
+Node *stmt(){
     Node *node;
-    if(consume_ret(token)){
-        node = new_node(ND_RET, expr(token, user_input, locals), NULL);
+    if(consume_ret()){
+        node = new_node(ND_RET, expr(), NULL);
     }
-    else node = expr(token, user_input, locals);
-    if(consume_sym(token, ";")) return node;
-    else error_at(user_input, (*token)->str, "Missing ';'.");
+    else node = expr();
+    if(consume_sym(";")) return node;
+    else error_at(token->str, "Missing ';'.");
 }
 
-Node *expr(Token **token, char *user_input, Lvar **locals) {
-    return assign(token, user_input, locals);
+Node *expr() {
+    return assign();
 }
 
-Node *assign(Token **token, char *user_input, Lvar **locals){
-    Node *node = equality(token, user_input, locals);
+Node *assign(){
+    Node *node = equality();
 
-    if(consume_sym(token, "=")){
-        return new_node(ND_ASN, node, assign(token, user_input, locals));
+    if(consume_sym("=")){
+        return new_node(ND_ASN, node, assign());
     }
     else return node;
 }
 
-Node *equality(Token **token, char *user_input, Lvar **locals) {
-    Node *node = relational(token, user_input, locals);
+Node *equality() {
+    Node *node = relational();
 
     while (1) {
-        if (consume_sym(token, "==")) {
-            node = new_node(ND_EQ, node, mul(token, user_input, locals));
+        if (consume_sym("==")) {
+            node = new_node(ND_EQ, node, mul());
             continue;
         }
-        if (consume_sym(token, "!=")) {
-            node = new_node(ND_NEQ, node, mul(token, user_input, locals));
+        if (consume_sym("!=")) {
+            node = new_node(ND_NEQ, node, mul());
             continue;
         }
         return node;
     }
 }
 
-Node *relational(Token **token, char *user_input, Lvar **locals) {
-    Node *node = add(token, user_input, locals);
+Node *relational() {
+    Node *node = add();
 
     while (1) {
-        if (consume_sym(token, "<")) {
-            node = new_node(ND_LT, node, add(token, user_input, locals));
+        if (consume_sym("<")) {
+            node = new_node(ND_LT, node, add());
             continue;
         }
-        if (consume_sym(token, "<=")) {
-            node = new_node(ND_LTE, node, add(token, user_input, locals));
+        if (consume_sym("<=")) {
+            node = new_node(ND_LTE, node, add());
             continue;
         }
-        if (consume_sym(token, ">")) {
-            node = new_node(ND_LT, add(token, user_input, locals), node);
+        if (consume_sym(">")) {
+            node = new_node(ND_LT, add(), node);
             continue;
         }
-        if (consume_sym(token, ">=")) {
-            node = new_node(ND_LTE, add(token, user_input, locals), node);
+        if (consume_sym(">=")) {
+            node = new_node(ND_LTE, add(), node);
             continue;
         }
         return node;
     }
 }
 
-Node *add(Token **token, char *user_input, Lvar **locals) {
-    Node *node = mul(token, user_input, locals);
+Node *add() {
+    Node *node = mul();
 
     while (1) {
-        if (consume_sym(token, "+")) {
-            node = new_node(ND_ADD, node, mul(token, user_input, locals));
+        if (consume_sym("+")) {
+            node = new_node(ND_ADD, node, mul());
             continue;
         }
-        if (consume_sym(token, "-")) {
-            node = new_node(ND_SUB, node, mul(token, user_input, locals));
+        if (consume_sym("-")) {
+            node = new_node(ND_SUB, node, mul());
             continue;
         }
         return node;
     }
 }
 
-Node *mul(Token **token, char *user_input, Lvar **locals) {
-    Node *node = unary(token, user_input, locals);
+Node *mul() {
+    Node *node = unary();
 
     while (1) {
-        if (consume_sym(token, "*")) {
-            node = new_node(ND_MUL, node, unary(token, user_input, locals));
+        if (consume_sym("*")) {
+            node = new_node(ND_MUL, node, unary());
             continue;
         }
-        if (consume_sym(token, "/")) {
-            node = new_node(ND_DIV, node, unary(token, user_input, locals));
+        if (consume_sym("/")) {
+            node = new_node(ND_DIV, node, unary());
             continue;
         }
         return node;
     }
 }
 
-Node *unary(Token **token, char *user_input, Lvar **locals) {
-    if (consume_sym(token, "+")) {
-        return primary(token, user_input, locals);
+Node *unary() {
+    if (consume_sym("+")) {
+        return primary();
     }
-    if (consume_sym(token, "-")) {
-        return new_node(ND_SUB, new_node_num(0), primary(token, user_input, locals));
+    if (consume_sym("-")) {
+        return new_node(ND_SUB, new_node_num(0), primary());
     }
-    return primary(token, user_input, locals);
+    return primary();
 }
 
-Node *primary(Token **token, char *user_input, Lvar **locals) {
-    if (consume_sym(token, "(")) {
-        Node *node = expr(token, user_input, locals);
+Node *primary() {
+    if (consume_sym("(")) {
+        Node *node = expr();
 
-        if (consume_sym(token, ")")) {
+        if (consume_sym(")")) {
             return node;
         }
         else {
-            error_at(user_input, (*token)->str,
-                     "The location of ')' is unknown.");
+            error_at(token->str, "The location of ')' is unknown.");
         }
     }
 
-    Token *idt = consume_idt(token);
+    Token *idt = consume_idt();
     if(idt){
         Node *node = new_node(ND_LVAR, NULL, NULL);
-        Lvar *var = find_Lvar(idt, *locals);
+        Lvar *var = find_Lvar(idt);
         if(var) node->offset = var->offset;
         else{
             var = calloc(1, sizeof(Lvar));
-            var->next = *locals;
+            var->next = locals;
             var->str = idt->str;
             var->len = idt->len;
-            var->offset = (*locals)->offset + 8;
+            var->offset = locals->offset + 8;
             node->offset = var->offset;
-            *locals = var;
+            locals = var;
         }
         return node;
     }
     else {
-        return new_node_num(consume_num(token, user_input));
+        return new_node_num(consume_num());
     }
 }
