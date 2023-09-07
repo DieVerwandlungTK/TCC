@@ -20,3 +20,7 @@ void error_at(char *user_input, char *loc, char *fmt, ...) {
     fprintf(stderr, "\n");
     exit(1);
 }
+
+bool is_valid_char(char c){
+    return ('a'<=c && c<='z') || ('A'<=c && c<='Z') || c=='_';
+}

@@ -6,9 +6,11 @@ int main(int argc, char **argv) {
     }
 
     char *user_input = argv[1];
+    Lvar *locals = calloc(1, sizeof(Lvar));
+    locals->offset = 0;
 
     Token *token = tokenize(user_input, user_input);
-    Node **code = program(&token, user_input);
+    Node **code = program(&token, user_input, &locals);
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");

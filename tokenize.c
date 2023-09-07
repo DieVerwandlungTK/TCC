@@ -25,11 +25,6 @@ Token *tokenize(char *p, char *user_input) {
             tail->val = strtol(p, &p, 10);
             continue;
         }
-        if('a'<=*p && *p<='z'){
-            tail = new_token(tail, TK_IDT, p, 1);
-            ++p;
-            continue;
-        }
         if (!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2)
             || !memcmp(p, "!=", 2)) {
             tail = new_token(tail, TK_SYMBOL, p, 2);
@@ -41,6 +36,12 @@ Token *tokenize(char *p, char *user_input) {
             ++p;
             continue;
         }
+        if(is_valid_char(*p)){
+            char *tmp = p;
+            while(is_valid_char(*p)) ++p;
+            tail = new_token(tail, TK_IDT, tmp, p-tmp);
+            continue;
+        }
         error_at(user_input, tail->str, "Invalid symbol.");
     }
 
@@ -49,21 +50,20 @@ Token *tokenize(char *p, char *user_input) {
 }
 
 bool consume_sym(Token **token, char *op) {
-    if ((*token)->kind == TK_SYMBOL
-        && !memcmp((*token)->str, op, strlen(op))){
+    if ((*token)->kind==TK_SYMBOL && (*token)->len==strlen(op) && !memcmp((*token)->str, op, strlen(op))){
         *token = (*token)->next;
         return true;
     }
     return false;
 }
 
-char consume_idt(Token **token) {
-    if ((*token)->kind==TK_IDT && 'a'<=(*token)->str[0] && 'z'>=(*token)->str[0]) {
-        char idt = (*token)->str[0];
+Token *consume_idt(Token **token) {
+    if ((*token)->kind==TK_IDT){
+        Token *idt = *token;
         *token = (*token)->next;
         return idt;
     }
-    return 0;
+    else return NULL;
 }
 
 int consume_num(Token **token, char *user_input) {
@@ -73,4 +73,13 @@ int consume_num(Token **token, char *user_input) {
         return val;
     }
     error_at(user_input, (*token)->str, "Here must be a number.");
+}
+
+Lvar *find_Lvar(Token *token, Lvar *locals){
+    for(Lvar *var=locals;var;var = var->next){
+        if(token->len==var->len && !memcmp(token->str, var->str, var->len)){
+            return var;
+        }
+    }
+    return NULL;
 }

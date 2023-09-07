@@ -32,5 +32,6 @@ assert 1 "100!=50;"
 assert 0 "100==(50+50   -0)*100;"
 assert 1 "a=1;"
 assert 11 "a=1;b=c=5;d=a+b+c;"
+assert 11 "foo=1;buzz=c=5;d=foo+buzz+c;"
 
 echo OK
