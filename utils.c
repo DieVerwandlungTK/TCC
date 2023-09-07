@@ -22,5 +22,5 @@ void error_at(char *user_input, char *loc, char *fmt, ...) {
 }
 
 bool is_valid_char(char c){
-    return ('a'<=c && c<='z') || ('A'<=c && c<='Z') || c=='_';
+    return ('a'<=c && c<='z') || ('A'<=c && c<='Z') || c=='_' || ('0'<=c && c<='9');
 }

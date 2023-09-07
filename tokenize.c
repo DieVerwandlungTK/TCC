@@ -16,24 +16,29 @@ Token *tokenize(char *p, char *user_input) {
     Token *tail = &head;
     tail->len = 0;
     while (*p) {
-        if (isspace(*p)) {
+        if(isspace(*p)) {
             ++p;
             continue;
         }
-        if (isdigit(*p)) {
+        if(isdigit(*p)) {
             tail = new_token(tail, TK_NUM, p, 0);
             tail->val = strtol(p, &p, 10);
             continue;
         }
-        if (!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2)
+        if(!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2)
             || !memcmp(p, "!=", 2)) {
             tail = new_token(tail, TK_SYMBOL, p, 2);
             p += 2;
             continue;
         }
-        if (strchr("+-*/()<>=;", *p)) {
+        if(strchr("+-*/()<>=;", *p)) {
             tail = new_token(tail, TK_SYMBOL, p, 1);
             ++p;
+            continue;
+        }
+        if(!strncmp(p, "return", 6) && !is_valid_char(p[6])){
+            tail = new_token(tail, TK_RET, p, 6);
+            p += 6;
             continue;
         }
         if(is_valid_char(*p)){
@@ -73,6 +78,14 @@ int consume_num(Token **token, char *user_input) {
         return val;
     }
     error_at(user_input, (*token)->str, "Here must be a number.");
+}
+
+bool consume_ret(Token **token){
+    if((*token)->kind == TK_RET){
+        *token = (*token)->next;
+        return true;
+    }
+    else return false;
 }
 
 Lvar *find_Lvar(Token *token, Lvar *locals){

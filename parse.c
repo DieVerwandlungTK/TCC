@@ -31,7 +31,11 @@ Node **program(Token **token, char *user_input, Lvar **locals) {
 }
 
 Node *stmt(Token **token, char *user_input, Lvar **locals){
-    Node *node = expr(token, user_input, locals);
+    Node *node;
+    if(consume_ret(token)){
+        node = new_node(ND_RET, expr(token, user_input, locals), NULL);
+    }
+    else node = expr(token, user_input, locals);
     if(consume_sym(token, ";")) return node;
     else error_at(user_input, (*token)->str, "Missing ';'.");
 }

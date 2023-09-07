@@ -11,6 +11,7 @@ typedef enum {
     TK_SYMBOL,
     TK_NUM,
     TK_IDT,
+    TK_RET,
     TK_END
 } TokenKind;
 
@@ -34,7 +35,8 @@ typedef enum {
     ND_LT,   // "<"
     ND_LTE,  // "<="
     ND_ASN,  // "="
-    ND_LVAR  // "Local variable"
+    ND_LVAR, // "Local variable"
+    ND_RET   // "return"
 } NodeKind;
 
 typedef struct Node Node;
@@ -56,9 +58,12 @@ struct Lvar{
 
 Token *new_token(Token *token, TokenKind kind, char *str, int len);
 Token *tokenize(char *p, char *user_input);
+
 bool consume_sym(Token **token, char *op);
-int consume_num(Token **token, char *user_input);
 Token *consume_idt(Token **token);
+int consume_num(Token **token, char *user_input);
+bool consume_ret(Token **token);
+
 Lvar *find_Lvar(Token *token, Lvar *locals);
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
@@ -80,4 +85,5 @@ void gen(Node *node);
 
 void error(char *fmt, ...);
 void error_at(char *user_input, char *loc, char *fmt, ...);
+
 bool is_valid_char(char c);
