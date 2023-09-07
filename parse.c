@@ -17,8 +17,36 @@ Node *new_node_num(int val) {
     return new;
 }
 
+Node **program(Token **token, char *user_input) { 
+    Node **stmts = calloc(MAX_STMTS, sizeof(Node*));
+
+    int i = 0;
+    while((*token)->kind!=TK_END){
+        stmts[i] = stmt(token, user_input);
+        ++i;
+    }
+
+    stmts[i] = NULL;
+    return stmts;
+}
+
+Node *stmt(Token **token, char *user_input){
+    Node *node = expr(token, user_input);
+    if(consume_sym(token, ";")) return node;
+    else error_at(user_input, (*token)->str, "Missing ';'.");
+}
+
 Node *expr(Token **token, char *user_input) {
-    return equality(token, user_input);
+    return assign(token, user_input);
+}
+
+Node *assign(Token **token, char *user_input){
+    Node *node = equality(token, user_input);
+
+    if(consume_sym(token, "=")){
+        return new_node(ND_ASN, node, assign(token, user_input));
+    }
+    else return node;
 }
 
 Node *equality(Token **token, char *user_input) {
@@ -115,8 +143,14 @@ Node *primary(Token **token, char *user_input) {
                      "The location of ')' is unknown.");
         }
     }
-    else {
-        Node *node = new_node_num(consume_num(token, user_input));
+
+    char idt = consume_idt(token);
+    if(idt){
+        Node *node = new_node(ND_LVAR, NULL, NULL);
+        node->offset = (idt-'a'+1)*8;
         return node;
+    }
+    else {
+        return new_node_num(consume_num(token, user_input));
     }
 }

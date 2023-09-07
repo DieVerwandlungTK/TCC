@@ -8,15 +8,24 @@ int main(int argc, char **argv) {
     char *user_input = argv[1];
 
     Token *token = tokenize(user_input, user_input);
-    Node *node = expr(&token, user_input);
+    Node **code = program(&token, user_input);
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
 
-    gen(node);
+    printf("    push rbp\n");       //prologue
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, 208\n");
 
-    printf("    pop rax\n");
+    for(int i=0;i<MAX_STMTS;++i){
+        if(code[i]==NULL) break;
+        gen(code[i]);
+        printf("    pop rax\n");
+    }
+
+    printf("    mov rsp, rbp\n");   //epilogue
+    printf("    pop rbp\n");
     printf("    ret\n");
 
     return 0;
