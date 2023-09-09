@@ -62,6 +62,29 @@ Node *stmt(){
         }
         else error_at(token->str, "Missing '('.");
     }
+    else if(consume_reserved(TK_FOR)){
+        node = new_node(ND_FOR, NULL, NULL);
+        if(consume_sym("(")){
+            if(!consume_sym(";")){
+                node->init = expr();
+                if(!consume_sym(";")) error_at(token->str, "Missing ';'.");
+            }
+            if(!consume_sym(";")){
+                node->cond = expr();
+                if(!consume_sym(";")) error_at(token->str, "Missing ';'.");
+            }
+            
+            if(!consume_sym(")")) node->inc = expr();
+
+            if(consume_sym(")")){
+                node->then = stmt();
+                return node;
+            }
+            else error_at(token->str, "Missing ')'.");
+        }
+        else error_at(token->str, "Missing '('.");
+    }
+    else if(consume_sym("{")){}
     else{
         node = expr();
         if(consume_sym(";")) return node;

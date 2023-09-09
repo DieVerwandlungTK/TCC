@@ -36,5 +36,6 @@ assert 11 "foo=1;buzz=c=5;d=foo+buzz+c;"
 assert 2 "a=1;b=1;if(a==b) c=a+b;"
 assert 9 "a=3;b=1;if(a==b) c=a+b;else d=3*a;"
 assert 5 "tanaka=0;while(tanaka<5) tanaka = tanaka+1;"
+assert 10 "suzuki=0;for(tanaka=0;tanaka<5;tanaka = tanaka+1)suzuki=tanaka+suzuki;return suzuki;"
 
 echo OK

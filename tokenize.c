@@ -31,7 +31,7 @@ Token *tokenize(char *p) {
             p += 2;
             continue;
         }
-        if(strchr("+-*/()<>=;", *p)) {
+        if(strchr("+-*/()<>=;{}", *p)) {
             tail = new_token(tail, TK_SYMBOL, p, 1);
             ++p;
             continue;
@@ -46,14 +46,19 @@ Token *tokenize(char *p) {
             p += 2;
             continue;
         }
+        if(!strncmp(p, "else", 4) && !is_valid_char(p[4])){
+            tail = new_token(tail, TK_ELS, p, 2);
+            p += 4;
+            continue;
+        }
         if(!strncmp(p, "while", 5) && !is_valid_char(p[5])){
             tail = new_token(tail, TK_WHIL, p, 5);
             p += 5;
             continue;
         }
-        if(!strncmp(p, "else", 4) && !is_valid_char(p[4])){
-            tail = new_token(tail, TK_ELS, p, 2);
-            p += 4;
+        if(!strncmp(p, "for", 3) && !is_valid_char(p[3])){
+            tail = new_token(tail, TK_FOR, p, 3);
+            p += 3;
             continue;
         }
         if(is_valid_char(*p)){
