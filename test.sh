@@ -38,5 +38,6 @@ assert 9 "a=3;b=1;if(a==b) c=a+b;else d=3*a;"
 assert 5 "tanaka=0;while(tanaka<5) tanaka = tanaka+1;"
 assert 10 "suzuki=0;for(tanaka=0;tanaka<5;tanaka = tanaka+1)suzuki=tanaka+suzuki;return suzuki;"
 assert 2 "a=5;b=5;if(a==b){a=10;b=5;return a/b;}"
+assert 6 "a=1;b=2;for(;;){if(a>b){return a*b;}a=a+1;}"
 
 echo OK

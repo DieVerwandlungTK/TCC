@@ -29,13 +29,17 @@ void program() {
 
 Node *stmt(){
     Node *node;
+
     if(consume_reserved(TK_RET)){
         node = new_node(ND_RET, expr(), NULL);
+
         if(consume_sym(";")) return node;
         else error_at(token->str, "Missing ';'.");
     }
+
     else if(consume_reserved(TK_IF)){
         node = new_node(ND_IF, NULL, NULL);
+
         if(consume_sym("(")){
             node->cond = expr();
             if(consume_sym(")")){
@@ -50,8 +54,10 @@ Node *stmt(){
         }
         else error_at(token->str, "Missing '('.");
     }
+
     else if(consume_reserved(TK_WHIL)){
         node = new_node(ND_WHIL, NULL, NULL);
+
         if(consume_sym("(")){
             node->cond = expr();
             if(consume_sym(")")){
@@ -64,6 +70,7 @@ Node *stmt(){
     }
     else if(consume_reserved(TK_FOR)){
         node = new_node(ND_FOR, NULL, NULL);
+        
         if(consume_sym("(")){
             if(!consume_sym(";")){
                 node->init = expr();
@@ -73,14 +80,19 @@ Node *stmt(){
                 node->cond = expr();
                 if(!consume_sym(";")) error_at(token->str, "Missing ';'.");
             }
-            
-            if(!consume_sym(")")) node->inc = expr();
 
             if(consume_sym(")")){
                 node->then = stmt();
                 return node;
             }
-            else error_at(token->str, "Missing ')'.");
+            else{
+                node->inc = expr();
+                if(consume_sym(")")){
+                    node->then = stmt();
+                    return node;
+                }
+                else error_at(token->str, "Missing ')'.");
+            }
         }
         else error_at(token->str, "Missing '('.");
     }
