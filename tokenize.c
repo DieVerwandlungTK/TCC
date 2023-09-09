@@ -25,8 +25,8 @@ Token *tokenize(char *p) {
             tail->val = strtol(p, &p, 10);
             continue;
         }
-        if(!memcmp(p, ">=", 2) || !memcmp(p, "<=", 2) || !memcmp(p, "==", 2)
-            || !memcmp(p, "!=", 2)) {
+        if(!strncmp(p, ">=", 2) || !strncmp(p, "<=", 2) || !strncmp(p, "==", 2)
+            || !strncmp(p, "!=", 2)) {
             tail = new_token(tail, TK_SYMBOL, p, 2);
             p += 2;
             continue;
@@ -39,6 +39,16 @@ Token *tokenize(char *p) {
         if(!strncmp(p, "return", 6) && !is_valid_char(p[6])){
             tail = new_token(tail, TK_RET, p, 6);
             p += 6;
+            continue;
+        }
+        if(!strncmp(p, "if", 2) && !is_valid_char(p[2])){
+            tail = new_token(tail, TK_IF, p, 2);
+            p += 2;
+            continue;
+        }
+        if(!strncmp(p, "else", 4) && !is_valid_char(p[4])){
+            tail = new_token(tail, TK_ELS, p, 2);
+            p += 4;
             continue;
         }
         if(is_valid_char(*p)){
@@ -80,8 +90,8 @@ int consume_num() {
     error_at(token->str, "Here must be a number.");
 }
 
-bool consume_ret(){
-    if(token->kind == TK_RET){
+bool consume_reserved(TokenKind kind){
+    if(token->kind == kind){
         token = token->next;
         return true;
     }

@@ -29,12 +29,32 @@ void program() {
 
 Node *stmt(){
     Node *node;
-    if(consume_ret()){
+    if(consume_reserved(TK_RET)){
         node = new_node(ND_RET, expr(), NULL);
+        if(consume_sym(";")) return node;
+        else error_at(token->str, "Missing ';'.");
     }
-    else node = expr();
-    if(consume_sym(";")) return node;
-    else error_at(token->str, "Missing ';'.");
+    else if(consume_reserved(TK_IF)){
+        node = new_node(ND_IF, NULL, NULL);
+        if(consume_sym("(")){
+            node->cond = expr();
+            if(consume_sym(")")){
+                node->then = stmt();
+                if(consume_reserved(TK_ELS)){
+                    node->els = stmt();
+                    return node;
+                }
+                else return node;
+            }
+            else error_at(token->str, "Missing ')'.");
+        }
+        else error_at(token->str, "Missing '('.");
+    }
+    else{
+        node = expr();
+        if(consume_sym(";")) return node;
+        else error_at(token->str, "Missing ';'.");
+    }
 }
 
 Node *expr() {
@@ -140,7 +160,7 @@ Node *primary() {
             return node;
         }
         else {
-            error_at(token->str, "The location of ')' is unknown.");
+            error_at(token->str, "Missing ')'.");;
         }
     }
 
