@@ -46,6 +46,11 @@ Token *tokenize(char *p) {
             p += 2;
             continue;
         }
+        if(!strncmp(p, "while", 5) && !is_valid_char(p[5])){
+            tail = new_token(tail, TK_WHIL, p, 5);
+            p += 5;
+            continue;
+        }
         if(!strncmp(p, "else", 4) && !is_valid_char(p[4])){
             tail = new_token(tail, TK_ELS, p, 2);
             p += 4;

@@ -50,6 +50,18 @@ Node *stmt(){
         }
         else error_at(token->str, "Missing '('.");
     }
+    else if(consume_reserved(TK_WHIL)){
+        node = new_node(ND_WHIL, NULL, NULL);
+        if(consume_sym("(")){
+            node->cond = expr();
+            if(consume_sym(")")){
+                node->then = stmt();
+                return node;
+            }
+            else error_at(token->str, "Missing ')'.");
+        }
+        else error_at(token->str, "Missing '('.");
+    }
     else{
         node = expr();
         if(consume_sym(";")) return node;

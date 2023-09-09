@@ -13,6 +13,7 @@ typedef enum {
     TK_IDT,
     TK_IF,
     TK_ELS,
+    TK_WHIL,
     TK_RET,
     TK_END
 } TokenKind;
@@ -39,6 +40,7 @@ typedef enum {
     ND_ASN,  // "="
     ND_LVAR, // "local variable"
     ND_IF,   // "if"
+    ND_WHIL, // "while"
     ND_RET   // "return"
 } NodeKind;
 
