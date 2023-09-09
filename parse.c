@@ -84,7 +84,16 @@ Node *stmt(){
         }
         else error_at(token->str, "Missing '('.");
     }
-    else if(consume_sym("{")){}
+    else if(consume_sym("{")){
+        node = new_node(ND_BLK, NULL, NULL);
+        node->blk = calloc(MAX_BLK_STMTS, sizeof(*node));
+        while(!consume_sym("}")){
+            if(node->blk_len>=MAX_BLK_STMTS) error_at(token->str, "Too many statements in this block.");
+            (node->blk)[node->blk_len] = stmt();
+            ++(node->blk_len);
+        }
+        return node;
+    }
     else{
         node = expr();
         if(consume_sym(";")) return node;

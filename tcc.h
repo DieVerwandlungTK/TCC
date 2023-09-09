@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_STMTS 100
+#define MAX_STMTS 1000
+#define MAX_BLK_STMTS 100
 
 typedef enum {
     TK_SYMBOL,
@@ -59,9 +60,12 @@ struct Node {
 
     Node *init;
     Node *inc;
+
+    Node **blk;
     
     int val;
     int offset;
+    int blk_len;
 };
 
 typedef struct Lvar Lvar;
