@@ -41,6 +41,7 @@ typedef enum {
     ND_LTE,  // "<="
     ND_ASN,  // "="
     ND_LVAR, // "local variable"
+    ND_FNC,  // "function"
     ND_IF,   // "if"
     ND_WHIL, // "while"
     ND_FOR,  // "for"
@@ -51,6 +52,7 @@ typedef enum {
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
+    
     Node *lhs;
     Node *rhs;
 
@@ -66,6 +68,8 @@ struct Node {
     int val;
     int offset;
     int blk_len;
+    char *str;
+    int str_len;
 };
 
 typedef struct Lvar Lvar;

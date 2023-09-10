@@ -222,17 +222,28 @@ Node *primary() {
 
     Token *idt = consume_idt();
     if(idt){
-        Node *node = new_node(ND_LVAR, NULL, NULL);
-        Lvar *var = find_Lvar(idt);
-        if(var) node->offset = var->offset;
+        Node *node;
+        if(consume_sym("(")){
+            if(consume_sym(")")){
+                node = new_node(ND_FNC, NULL, NULL);
+                node->str = idt->str;
+                node->str_len = idt->len;
+            }
+            else error_at(token->str, "Missing ')'.");
+        }
         else{
-            var = calloc(1, sizeof(Lvar));
-            var->next = locals;
-            var->str = idt->str;
-            var->len = idt->len;
-            var->offset = locals->offset + 8;
-            node->offset = var->offset;
-            locals = var;
+            node = new_node(ND_LVAR, NULL, NULL);
+            Lvar *var = find_Lvar(idt);
+            if(var) node->offset = var->offset;
+            else{
+                var = calloc(1, sizeof(Lvar));
+                var->next = locals;
+                var->str = idt->str;
+                var->len = idt->len;
+                var->offset = locals->offset + 8;
+                node->offset = var->offset;
+                locals = var;
+            }
         }
         return node;
     }
