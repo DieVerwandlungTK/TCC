@@ -224,12 +224,10 @@ Node *primary() {
     if(idt){
         Node *node;
         if(consume_sym("(")){
-            if(consume_sym(")")){
-                node = new_node(ND_FNC, NULL, NULL);
-                node->str = idt->str;
-                node->str_len = idt->len;
-            }
-            else error_at(token->str, "Missing ')'.");
+            node = new_node(ND_FNC, NULL, NULL);
+            node->str = idt->str;
+            node->str_len = idt->len;
+            node->args = fnc_args();
         }
         else{
             node = new_node(ND_LVAR, NULL, NULL);
@@ -247,7 +245,21 @@ Node *primary() {
         }
         return node;
     }
-    else {
-        return new_node_num(consume_num());
+    else return new_node_num(consume_num());
+}
+
+Node *fnc_args(){
+    if(consume_sym(")")) return NULL;
+    Node head;
+    Node *tail = &head;
+    tail->next = assign();
+    tail = tail->next;
+    while(!consume_sym(")")){
+        if(consume_sym(",")){
+            tail->next = assign();
+            tail = tail->next;
+        }
+        else error_at(token->str, "Missing ','.");
     }
+    return head.next;
 }

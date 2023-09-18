@@ -64,10 +64,14 @@ struct Node {
     Node *inc;
 
     Node **blk;
+    int blk_len;
     
     int val;
+
     int offset;
-    int blk_len;
+
+    Node *args;
+    Node *next;
     char *str;
     int str_len;
 };
@@ -78,6 +82,12 @@ struct Lvar{
     char *str;
     int len;
     int offset;
+};
+
+typedef struct Alc Alc;
+struct Alc{
+    Alc *bottom;
+    int val;
 };
 
 Token *new_token(Token *tok, TokenKind kind, char *str, int len);
@@ -103,6 +113,7 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+Node *fnc_args();
 
 void gen_lval(Node *node);
 void gen(Node *node);
@@ -117,3 +128,5 @@ extern char *user_input;
 extern Lvar *locals;
 extern Node **code;
 extern int label;
+extern Alc *lvar_alloc;
+extern const char *arg_reg[];

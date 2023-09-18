@@ -31,7 +31,7 @@ Token *tokenize(char *p) {
             p += 2;
             continue;
         }
-        if(strchr("+-*/()<>=;{}", *p)) {
+        if(strchr("+-*/()<>=;{},", *p)) {
             tail = new_token(tail, TK_SYMBOL, p, 1);
             ++p;
             continue;

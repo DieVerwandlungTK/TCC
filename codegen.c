@@ -110,9 +110,21 @@ void gen(Node *node) {
             return;
         
         case ND_FNC:
+            int arg_num = 0;
+            for(Node *arg = node->args;arg;arg = arg->next){
+                gen(arg);
+                ++arg_num;
+            }
+
+            for(;arg_num>0;--arg_num){
+                printf("    pop %s\n", arg_reg[arg_num-1]);
+            }
+
+
             char *s = calloc(node->str_len, sizeof(char));
             strncpy(s, node->str, node->str_len);
             printf("    call %s\n", s);
+            printf("    push rax\n");
             return;
     }
 
