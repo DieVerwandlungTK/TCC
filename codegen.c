@@ -116,14 +116,34 @@ void gen(Node *node) {
                 ++arg_num;
             }
 
+            if(arg_num>6) error("The number of function arguments must be less than 7, but is %d\n", arg_num);
+
             for(;arg_num>0;--arg_num){
-                printf("    pop %s\n", arg_reg[arg_num-1]);
+                printf("    pop %s\n", arg_reg[arg_num-1]); // Put argument's value into a required register.
             }
 
+            int lend = label;
+            int lcall = label+1;
+            label += 2;
 
             char *s = calloc(node->str_len, sizeof(char));
             strncpy(s, node->str, node->str_len);
+
+            printf("    mov rax, rsp\n");
+            printf("    and rax, 15\n");
+            printf("    jnz .Lcall%03d\n", lcall);
+
+            printf("    mov rax, 0\n");
             printf("    call %s\n", s);
+            printf("    jmp .Lend%03d\n", lend);
+
+            printf(".Lcall%03d:\n", lcall);
+            printf("    sub rsp, 8\n");
+            printf("    mov rax, 0\n");
+            printf("    call %s\n", s);
+            printf("    add rsp, 8\n");
+
+            printf(".Lend%03d:\n", lend);
             printf("    push rax\n");
             return;
     }

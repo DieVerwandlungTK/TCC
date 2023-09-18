@@ -90,13 +90,13 @@ struct Alc{
     int val;
 };
 
-Token *new_token(Token *tok, TokenKind kind, char *str, int len);
-Token *tokenize(char *p);
+Token *new_token(Token *tok, TokenKind kind, char *str, int len);   // Return a new token.
+Token *tokenize(char *p);   // Return a token string generated from a input string.
 
-bool consume_sym(char *op);
-Token *consume_idt();
-int consume_num();
-bool consume_reserved(TokenKind kind);
+bool consume_sym(char *op);     // Consume a designated token.
+Token *consume_idt();   // Consume an idntifier
+int consume_num();    // Consume a number.
+bool consume_reserved(TokenKind kind);      // Consume a designated reserved word.
 
 Lvar *find_Lvar(Token *tok);
 
