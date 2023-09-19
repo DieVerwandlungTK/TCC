@@ -41,7 +41,7 @@ typedef enum {
     ND_LTE,  // "<="
     ND_ASN,  // "="
     ND_LVAR, // "local variable"
-    ND_FNC,  // "function"
+    ND_FNC_CALL,  // "function call"
     ND_IF,   // "if"
     ND_WHIL, // "while"
     ND_FOR,  // "for"
@@ -49,61 +49,78 @@ typedef enum {
     ND_BLK
 } NodeKind;
 
+typedef struct Lvar Lvar;
+struct Lvar{
+    char *str;
+    int len;
+    int offset;
+};
+
+typedef struct LvarList LvarList;
+struct LvarList{
+    Lvar *var;
+    LvarList *next;
+};
+
 typedef struct Node Node;
 struct Node {
     NodeKind kind;
     
+    // Binary operator
     Node *lhs;
     Node *rhs;
 
+    // Number node
+    int val;
+
+    // if or while statement
     Node *then;
     Node *cond;
     Node *els;
 
+    // for statement
     Node *init;
     Node *inc;
 
+    // "{}" body
     Node **blk;
     int blk_len;
     
-    int val;
+    // Local variable
+    Lvar *var;
 
-    int offset;
-
+    // func call
     Node *args;
     Node *next;
     char *str;
     int str_len;
 };
 
-typedef struct Lvar Lvar;
-struct Lvar{
-    Lvar *next;
+typedef struct Func Func;
+struct Func{
+    LvarList *locals;
+    LvarList *args;
+    Node *node;
+    Func *next;
     char *str;
     int len;
-    int offset;
-};
-
-typedef struct Alc Alc;
-struct Alc{
-    Alc *bottom;
-    int val;
+    int stack_size;
 };
 
 Token *new_token(Token *tok, TokenKind kind, char *str, int len);   // Return a new token.
 Token *tokenize(char *p);   // Return a token string generated from a input string.
 
 bool consume_sym(char *op);     // Consume a designated token.
-Token *consume_idt();   // Consume an idntifier
-int consume_num();    // Consume a number.
-bool consume_reserved(TokenKind kind);      // Consume a designated reserved word.
+Token *consume_idt();   // Consume an idntifier token.
+int consume_num();    // Consume a number token.
+bool consume_reserved(TokenKind kind);      // Consume a designated reserved word token.
 
 Lvar *find_Lvar(Token *tok);
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
-void program();
+Func *program();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -115,6 +132,11 @@ Node *unary();
 Node *primary();
 Node *fnc_args();
 
+LvarList *read_args();
+Func *function();
+
+void code_gen(Func *funcs);
+
 void gen_lval(Node *node);
 void gen(Node *node);
 
@@ -125,8 +147,7 @@ bool is_valid_char(char c);
 
 extern Token *token;
 extern char *user_input;
-extern Lvar *locals;
-extern Node **code;
+extern LvarList *locals;
 extern int label;
-extern Alc *lvar_alloc;
 extern const char *arg_reg[];
+extern char *func_name;

@@ -109,7 +109,8 @@ bool consume_reserved(TokenKind kind){
 }
 
 Lvar *find_Lvar(Token *tok){
-    for(Lvar *var=locals;var;var = var->next){
+    for(LvarList *vl=locals;vl;vl=vl->next){
+        Lvar *var = vl->var;
         if(tok->len==var->len && !memcmp(tok->str, var->str, var->len)){
             return var;
         }

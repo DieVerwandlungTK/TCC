@@ -17,14 +17,82 @@ Node *new_node_num(int val) {
     return new;
 }
 
-void program() { 
+Func *program() { 
     int i=0;
+    Func head;
+    Func *tail = &head;
     while(token->kind!=TK_END){
         if(i>=MAX_STMTS) error("Too many statements.\n");
-        code[i] = stmt();
+        locals = NULL;
+        tail->next = function();
+        tail = tail->next;
         ++i;
     }
-    code[i+1] = NULL;
+    return head.next;
+}
+
+LvarList *read_args(){
+    Token *idt = consume_idt();
+    if(!idt) error_at(token->str, "Here must be an argument idntifier.");
+
+    Lvar *var = calloc(1, sizeof(Lvar));
+    var->str = idt->str;
+    var->len = idt->len;
+
+    LvarList head;
+    LvarList *tail = head.next = calloc(1, sizeof(LvarList));
+    tail->var = var;
+
+    LvarList *vl = calloc(1, sizeof(LvarList));
+    vl->var = var;
+    locals = vl;
+
+    while(!consume_sym(")")){
+        if(consume_sym(",")){
+            Token *idt = consume_idt();
+            if(!idt) error_at(token->str, "Here must be an argument idntifier.");
+
+            var = calloc(1, sizeof(Lvar));
+            var->str = idt->str;
+            var->len = idt->len;
+            
+            tail->next = calloc(1, sizeof(LvarList));
+            tail = tail->next;
+            tail->var = var;
+
+            vl = calloc(1, sizeof(LvarList));
+            vl->var = var;
+            vl->next = locals;
+            locals = vl;
+        }
+        else error_at(token->str, "Missing ','.");
+    }
+    return head.next;
+}
+
+Func *function(){
+    Token *idt = consume_idt();
+    if(!idt) error_at(token->str, "Here must be a function idntifier.");
+    if(!consume_sym("(")) error_at(token->str, "Missing '('.");
+
+    Func *func = calloc(1, sizeof(Func));
+    func->str = idt->str;
+    func->len = idt->len;
+    if(!consume_sym(")")) func->args = read_args();
+    if(consume_sym("{")){
+        Node head;
+        Node *tail = &head;
+        while(!consume_sym("}")){
+            tail->next = stmt();
+            tail = tail->next;
+        }
+        func->node = head.next;
+    }
+    else{
+        func->node = stmt();
+    }
+    func->locals = locals;
+    return func;
 }
 
 Node *stmt(){
@@ -224,7 +292,7 @@ Node *primary() {
     if(idt){
         Node *node;
         if(consume_sym("(")){
-            node = new_node(ND_FNC, NULL, NULL);
+            node = new_node(ND_FNC_CALL, NULL, NULL);
             node->str = idt->str;
             node->str_len = idt->len;
             node->args = fnc_args();
@@ -232,16 +300,17 @@ Node *primary() {
         else{
             node = new_node(ND_LVAR, NULL, NULL);
             Lvar *var = find_Lvar(idt);
-            if(var) node->offset = var->offset;
-            else{
+            if(!var){
                 var = calloc(1, sizeof(Lvar));
-                var->next = locals;
                 var->str = idt->str;
                 var->len = idt->len;
-                var->offset = locals->offset + 8;
-                node->offset = var->offset;
-                locals = var;
+
+                LvarList *lv = calloc(1, sizeof(LvarList));
+                lv->var = var;
+                lv->next = locals;
+                locals = lv;
             }
+            node->var = var;
         }
         return node;
     }

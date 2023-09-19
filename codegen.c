@@ -3,7 +3,7 @@
 void gen_lval(Node *node){
     if(node->kind!=ND_LVAR) error("The left operand of the assignment operator is not a lvalue.");
     printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
+    printf("    sub rax, %d\n", node->var->offset);
     printf("    push rax\n");
 }
 
@@ -35,10 +35,7 @@ void gen(Node *node) {
             gen(node->lhs);
 
             printf("    pop rax\n");
-
-            printf("    mov rsp, rbp\n");   //epilogue
-            printf("    pop rbp\n");
-            printf("    ret\n");
+            printf("    jmp .Lreturn.%s\n", func_name);
             return;
         
         case ND_IF:
@@ -109,7 +106,7 @@ void gen(Node *node) {
             }
             return;
         
-        case ND_FNC:
+        case ND_FNC_CALL:
             int arg_num = 0;
             for(Node *arg = node->args;arg;arg = arg->next){
                 gen(arg);
@@ -196,4 +193,33 @@ void gen(Node *node) {
             break;
     }
     printf("    push rax\n");
+}
+
+void code_gen(Func *funcs){
+    printf(".intel_syntax noprefix\n");
+
+    for(Func *fnc = funcs;fnc;fnc=fnc->next){
+        func_name = calloc(fnc->len, sizeof(char));
+        strncpy(func_name, fnc->str, fnc->len);
+        printf(".global %s\n", func_name);
+        printf("%s:\n", func_name);
+
+        printf("    push rbp\n");       // Prologue
+        printf("    mov rbp, rsp\n");
+        printf("    sub rsp, %d\n", fnc->stack_size);
+
+        int i=0;
+        for(LvarList *arg = fnc->args;arg;arg = arg->next){
+            printf("    mov [rbp-%d], %s\n", arg->var->offset, arg_reg[i++]);
+        }
+
+        for(Node *node = fnc->node;node;node=node->next){
+            gen(node);
+        }
+
+        printf(".Lreturn.%s:\n", func_name);     // Epilogue
+        printf("    mov rsp, rbp\n");
+        printf("    pop rbp\n");
+        printf("    ret\n");
+    }
 }

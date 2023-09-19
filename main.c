@@ -6,30 +6,19 @@ int main(int argc, char **argv) {
     }
 
     user_input = argv[1];
-
     token = tokenize(user_input);
-    code = calloc(MAX_STMTS+1, sizeof(Node*));
-    locals = calloc(1, sizeof(Lvar*));
+    Func *funcs = program();
 
-    program();
-
-    printf(".intel_syntax noprefix\n");
-    printf(".globl main\n");
-    printf("main:\n");
-
-    printf("    push rbp\n");       //prologue
-    printf("    mov rbp, rsp\n");
-    printf("    sub rsp, 208\n");
-
-    for(int i=0;i<MAX_STMTS;++i){
-        if(code[i]==NULL) break;
-        gen(code[i]);
-        printf("    pop rax\n");
+    for(Func *fn=funcs;fn;fn=fn->next){
+        int offset = 0;
+        for(LvarList *vl=fn->locals;vl;vl=vl->next){
+            offset+=8;
+            vl->var->offset = offset;
+        }
+        fn->stack_size = offset;
     }
 
-    printf("    mov rsp, rbp\n");   //epilogue
-    printf("    pop rbp\n");
-    printf("    ret\n");
+    code_gen(funcs);
 
     return 0;
 }
